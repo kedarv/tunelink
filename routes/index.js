@@ -31,6 +31,44 @@ var generateRandomString = function(length) {
 
 var stateKey = 'spotify_auth_state';
 
+var searchAndPlay = function() {
+  var userId = firebase.auth().currentUser.uid;
+  return firebase.database().ref('/users/' + userId).once('value').then(function(snapshot) {
+    var username = snapshot.val().username;
+    // ...
+  });
+  
+  var searchOpts = {
+    url: 'https://api.spotify.com/v1/search',
+    headers: { 'Authorization': 'Bearer ' + access_token },
+    qs: {
+      q: "Humble",
+      type: "track",
+      market: "US",
+      limit: "10"
+    }
+  }
+  request.get(searchOpts, function(error, response, body) {
+    var song_to_play = data.body.tracks.items.first;
+    console.log(song_to_play);
+  });
+
+  var playOpts = {
+    url: 'https://api.spotify.com/v1/me/player/play',
+    headers: { 'Authorization': 'Bearer ' + access_token },
+    method: 'PUT',
+    json: {
+      context_uri: "spotify:album:5ht7ItJgpBH7W6vJ5BqpPr",
+      offset: {position: 5}
+    }
+  }
+  request(playOpts, function(error, response, body) {
+    console.log(body);
+  });
+
+
+}
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
@@ -118,20 +156,8 @@ router.get('/callback', function(req, res) {
           }
         }
         request.get(searchOpts, function(error, response, body) {
-          console.log(body);
-        });
-
-        var playOpts = {
-          url: 'https://api.spotify.com/v1/me/player/play',
-          headers: { 'Authorization': 'Bearer ' + access_token },
-          method: 'PUT',
-          json: {
-            context_uri: "spotify:album:5ht7ItJgpBH7W6vJ5BqpPr",
-            offset: {position: 5}
-          }
-        }
-        request(playOpts, function(error, response, body) {
-          console.log(body);
+          console.log("*******");
+          console.log(response.body.tracks);
         });
 
 
