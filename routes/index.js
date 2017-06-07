@@ -83,7 +83,6 @@ var playAll = function(uri) {
   ref.on("value", function(snapshot) {
     snapshot.forEach(function(child){
       var child_slack_name = child.val().slack_name;
-      console.log(child_slack_name)
       play(child_slack_name, uri);
     })
   }, function (error) {
