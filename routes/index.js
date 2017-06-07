@@ -259,26 +259,26 @@ router.get('/refresh_token', function(req, res) {
 });
 
 
-var getTrack = function(callback) {
+// var getTrack = function(callback) {
 
-  var access_token = firebase.database().ref("users/" + username + "/access_token");
-  access_token.on("value", function(snapshot) {
-     console.log(snapshot.val());
-  }, function (error) {
-     console.log("Error: " + error.code);
-  });
+//   var access_token = firebase.database().ref("users/" + username + "/access_token");
+//   access_token.on("value", function(snapshot) {
+//      console.log(snapshot.val());
+//   }, function (error) {
+//      console.log("Error: " + error.code);
+//   });
   
-  var getTrackOpts = {
-    url: 'https://api.spotify.com/v1/me/player',
-    headers: { 'Authorization': 'Bearer ' + access_token },
-  }
+//   var getTrackOpts = {
+//     url: 'https://api.spotify.com/v1/me/player',
+//     headers: { 'Authorization': 'Bearer ' + access_token },
+//   }
 
-  request.get(getTrackOpts, function(error, response, body) {
-    var parsed = JSON.parse(body);
-	//console.log(body); 
-    callback(parsed.item.duration_ms); 
-  });
-}
+//   request.get(getTrackOpts, function(error, response, body) {
+//     var parsed = JSON.parse(body);
+// 	//console.log(body); 
+//     callback(parsed.item.duration_ms); 
+//   });
+// }
   
 var songqueue = ["spotify:track:6kl1qtQXQsFiIWRBK24Cfp", "spotify:track:7KXjTSCq5nL1LoYtL7XAwS"]; 
 var run = function() {
@@ -287,10 +287,10 @@ var run = function() {
 		// pop from queue  
 		// ..
 		playAll(uri);
-		var track = getTrack(function(duration) {
-			console.log("in callback " + duration);
-			setTimeout(function() {run();}, duration);
-		});
+		// var track = getTrack(function(duration) {
+		// 	console.log("in callback " + duration);
+		// 	setTimeout(function() {run();}, duration);
+		// });
 	}
 }
 
