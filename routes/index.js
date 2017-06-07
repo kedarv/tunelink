@@ -31,35 +31,34 @@ var generateRandomString = function(length) {
 
 var stateKey = 'spotify_auth_state';
 
-var search = function(username, q_text) {
+var search = function(username, q_text, callback) {
   var access_token = firebase.database().ref("users/" + username + "/access_token");
   access_token.on("value", function(snapshot) {
-     console.log(snapshot.val());
+    var searchOpts = {
+      url: 'https://api.spotify.com/v1/search',
+      headers: { 'Authorization': 'Bearer ' + snapshot.val() },
+      qs: {
+        q: q_text,
+        type: "track",
+        market: "US",
+        limit: "1"
+      }
+    }
+  
+    request.get(searchOpts, function(error, response, body) {
+      var parsed = JSON.parse(body);
+      // console.log("got " + parsed.tracks.items[0].uri + " calling callback");
+      callback(parsed.tracks.items[0].uri);
+    }); 
   }, function (error) {
      console.log("Error: " + error.code);
-  });
-  
-  var searchOpts = {
-    url: 'https://api.spotify.com/v1/search',
-    headers: { 'Authorization': 'Bearer ' + access_token },
-    qs: {
-      q: q_text,
-      type: "track",
-      market: "US",
-      limit: "1"
-    }
-  }
-
-  request.get(searchOpts, function(error, response, body) {
-    var parsed = JSON.parse(body);
-    return parsed.tracks.items[0].uri
   });
 }
 
 var play = function(uri) {
   var playOpts = {
     url: 'https://api.spotify.com/v1/me/player/play',
-    headers: { 'Authorization': 'Bearer ' + access_token },
+    headers: { 'Authorization': 'Bearer ' + access_token.val() },
     method: 'PUT',
     json: {
       context_uri: uri,
@@ -84,8 +83,10 @@ router.post('/request', function(req, res, next) {
   if(text === "auth") {
     message = "http://localhost:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
   } else {
-    var uri = search(req.body.user_name, text);
-    play(uri);
+    search(req.body.user_name, text, function(spotify_uri) {
+      console.log("in callback: " + spotify_uri);
+    });
+    // play(uri);
   }
   let data = {
     response_type: 'in_channel',
