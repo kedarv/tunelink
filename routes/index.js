@@ -38,7 +38,7 @@ var search = function(username, q_text) {
   }, function (error) {
      console.log("Error: " + error.code);
   });
-  
+
   var searchOpts = {
     url: 'https://api.spotify.com/v1/search',
     headers: { 'Authorization': 'Bearer ' + access_token },
@@ -70,6 +70,23 @@ var play = function(uri) {
     console.log("Played song");
   });
 }
+
+var playAll = function() {
+  var ref = firebase.database().ref();
+
+  ref.on("value", function(snapshot) {
+    // console.log(snapshot.val());
+    for (var key in snapshot.val()){
+      console.log(key.)
+    }
+
+
+  }, function (error) {
+    console.log("Error: " + error.code);
+  });
+}
+
+playAll();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
