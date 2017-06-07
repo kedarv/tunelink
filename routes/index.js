@@ -66,6 +66,9 @@ var play = function(uri) {
       offset: {position: 5}
     }
   }
+  request(playOpts, function(error, response, body) {
+    console.log("Played song");
+  });
 }
 
 /* GET home page. */
@@ -80,6 +83,9 @@ router.post('/request', function(req, res, next) {
   var message;
   if(text === "auth") {
     message = "http://localhost:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
+  } else {
+    var uri = search(req.body.user_name, text);
+    play(uri);
   }
   let data = {
     response_type: 'in_channel',
