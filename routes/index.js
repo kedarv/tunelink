@@ -96,6 +96,33 @@ router.get('/callback', function(req, res) {
           console.log(body);
         });
 
+        var searchOpts = {
+          url: 'https://api.spotify.com/v1/search',
+          headers: { 'Authorization': 'Bearer ' + access_token },
+          qs: {
+            q: "Humble",
+            type: "track",
+            market: "US",
+            limit: "10"
+          }
+        }
+        request.get(searchOpts, function(error, response, body) {
+          console.log(body);
+        });
+
+        var playOpts = {
+          url: 'https://api.spotify.com/v1/me/player/play',
+          headers: { 'Authorization': 'Bearer ' + access_token },
+          method: 'PUT',
+          json: {
+            context_uri: "spotify:album:5ht7ItJgpBH7W6vJ5BqpPr",
+            offset: {position: 5}
+          }
+        }
+        request(playOpts, function(error, response, body) {
+          console.log(body);
+        });
+
         // we can also pass the token to the browser to make requests from there
         res.redirect('/#' +
           querystring.stringify({
