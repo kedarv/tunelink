@@ -71,6 +71,7 @@ var play = function(uri) {
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.cookie('user', req.query.user);
+  res.cookie('id', req.query.id);
   res.render('index', { title: 'Express' });
 });
 
@@ -78,7 +79,7 @@ router.post('/request', function(req, res, next) {
   let text = req.body.text;
   var message;
   if(text === "auth") {
-    message = "http://localhost:8888?user=" + req.body.user_name;
+    message = "http://localhost:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
   }
   let data = {
     response_type: 'in_channel',
@@ -139,8 +140,9 @@ router.get('/callback', function(req, res) {
             refresh_token = body.refresh_token;
             // console.log(access_token)
         console.log("USER: ~~~~~~" + req.cookies['user']);
-        firebase.database().ref('users/').set({
-          slack: req.cookies['user'],
+        firebase.database().ref('users/' + req.cookies['user']).set({
+          slack_name: req.cookies['user'],
+          slack_id: req.cookies['id'],
           access_token:  access_token
         });
 
