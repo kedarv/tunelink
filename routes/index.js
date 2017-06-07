@@ -31,42 +31,41 @@ var generateRandomString = function(length) {
 
 var stateKey = 'spotify_auth_state';
 
-var searchAndPlay = function() {
-  var userId = firebase.auth().currentUser.uid;
-  return firebase.database().ref('/users/' + userId).once('value').then(function(snapshot) {
-    var username = snapshot.val().username;
-    // ...
+var search = function(username, q_text) {
+  var access_token = firebase.database().ref("users/" + username + "/access_token");
+  access_token.on("value", function(snapshot) {
+     console.log(snapshot.val());
+  }, function (error) {
+     console.log("Error: " + error.code);
   });
   
   var searchOpts = {
     url: 'https://api.spotify.com/v1/search',
     headers: { 'Authorization': 'Bearer ' + access_token },
     qs: {
-      q: "Humble",
+      q: q_text,
       type: "track",
       market: "US",
-      limit: "10"
+      limit: "1"
     }
   }
-  request.get(searchOpts, function(error, response, body) {
-    var song_to_play = data.body.tracks.items.first;
-    console.log(song_to_play);
-  });
 
+  request.get(searchOpts, function(error, response, body) {
+    var parsed = JSON.parse(body);
+    return parsed.tracks.items[0].uri
+  });
+}
+
+var play = function(uri) {
   var playOpts = {
     url: 'https://api.spotify.com/v1/me/player/play',
     headers: { 'Authorization': 'Bearer ' + access_token },
     method: 'PUT',
     json: {
-      context_uri: "spotify:album:5ht7ItJgpBH7W6vJ5BqpPr",
+      context_uri: uri,
       offset: {position: 5}
     }
   }
-  request(playOpts, function(error, response, body) {
-    console.log(body);
-  });
-
-
 }
 
 /* GET home page. */
@@ -163,11 +162,12 @@ router.get('/callback', function(req, res) {
             q: "Humble",
             type: "track",
             market: "US",
-            limit: "10"
+            limit: "1"
           }
         }
         request.get(searchOpts, function(error, response, body) {
-            console.log(body);
+          var parsed = JSON.parse(body);
+          console.log(parsed.tracks.items[0].uri)
         });
 
         var playOpts = {
