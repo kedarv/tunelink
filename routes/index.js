@@ -127,7 +127,7 @@ router.get('/login', function(req, res) {
   res.cookie(stateKey, state);
 
   // your application requests authorization
-  var scope = 'user-read-private user-read-email streaming user-library-read user-modify-playback-state';
+  var scope = 'user-read-private user-read-email streaming user-library-read user-modify-playback-state user-read-playback-state';
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -258,5 +258,44 @@ router.get('/refresh_token', function(req, res) {
     }
   });
 });
+
+
+var getTrack = function(callback) {
+
+  var access_token = firebase.database().ref("users/" + username + "/access_token");
+  access_token.on("value", function(snapshot) {
+     console.log(snapshot.val());
+  }, function (error) {
+     console.log("Error: " + error.code);
+  });
+  
+  var getTrackOpts = {
+    url: 'https://api.spotify.com/v1/me/player',
+    headers: { 'Authorization': 'Bearer ' + access_token },
+  }
+
+  request.get(getTrackOpts, function(error, response, body) {
+    var parsed = JSON.parse(body);
+	//console.log(body); 
+    callback(parsed.item.duration_ms); 
+  });
+}
+  
+var songqueue = ["spotify:track:6kl1qtQXQsFiIWRBK24Cfp", "spotify:track:7KXjTSCq5nL1LoYtL7XAwS"]; 
+var run = function() {
+	if (songqueue.length > 0){
+		var uri = songqueue.shift();
+		// pop from queue  
+		// ..
+		playAll(uri);
+		var track = getTrack(function(duration) {
+			console.log("in callback " + duration);
+			setTimeout(function() {run();}, duration);
+		});
+	}
+}
+
+run(); 
+
 
 module.exports = router;
