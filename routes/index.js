@@ -31,56 +31,59 @@ var generateRandomString = function(length) {
 
 var stateKey = 'spotify_auth_state';
 
-var search = function(username, q_text) {
-  var access_token = firebase.database().ref("users/" + username + "/access_token");
+var search = function(slack_username, q_text, callback) {
+  var access_token = firebase.database().ref("users/" + slack_username + "/access_token");
   access_token.on("value", function(snapshot) {
-     console.log(snapshot.val());
+    var searchOpts = {
+      url: 'https://api.spotify.com/v1/search',
+      headers: { 'Authorization': 'Bearer ' + snapshot.val() },
+      qs: {
+        q: q_text,
+        type: "track",
+        market: "US",
+        limit: "1"
+      }
+    }
+    request.get(searchOpts, function(error, response, body) {
+      var parsed = JSON.parse(body);
+      callback(parsed.tracks.items[0].uri);
+    });
+
   }, function (error) {
      console.log("Error: " + error.code);
   });
-
-  var searchOpts = {
-    url: 'https://api.spotify.com/v1/search',
-    headers: { 'Authorization': 'Bearer ' + access_token },
-    qs: {
-      q: q_text,
-      type: "track",
-      market: "US",
-      limit: "1"
-    }
-  }
-
-  request.get(searchOpts, function(error, response, body) {
-    var parsed = JSON.parse(body);
-    return parsed.tracks.items[0].uri
-  });
 }
 
-var play = function(uri) {
-  var playOpts = {
-    url: 'https://api.spotify.com/v1/me/player/play',
-    headers: { 'Authorization': 'Bearer ' + access_token },
-    method: 'PUT',
-    json: {
-      context_uri: uri,
-      offset: {position: 5}
+var play = function(slack_username, uri) {
+  var access_token = firebase.database().ref("users/" + slack_username + "/access_token");
+  access_token.on("value", function(snapshot) {
+
+    var playOpts = {
+      url: 'https://api.spotify.com/v1/me/player/play',
+      headers: { 'Authorization': 'Bearer ' + snapshot.val() },
+      method: 'PUT',
+      json: {
+        uris: [uri]
+      }
     }
-  }
-  request(playOpts, function(error, response, body) {
-    console.log("Played song");
+    request(playOpts, function(error, response, body) {
+      console.log("Played song");
+    });
+
+  }, function (error) {
+     console.log("Error: " + error.code);
   });
 }
 
 var playAll = function() {
-  var ref = firebase.database().ref();
+  var ref = firebase.database().ref("users");
 
   ref.on("value", function(snapshot) {
-    // console.log(snapshot.val());
-    for (var key in snapshot.val()){
-      console.log(key.)
-    }
-
-
+    snapshot.forEach(function(child){
+      var child_slack_name = child.val().slack_name;
+      console.log(child_slack_name)
+      play(child_slack_name, "spotify:track:7KXjTSCq5nL1LoYtL7XAwS");
+    })
   }, function (error) {
     console.log("Error: " + error.code);
   });
@@ -101,8 +104,10 @@ router.post('/request', function(req, res, next) {
   if(text === "auth") {
     message = "http://localhost:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
   } else {
-    var uri = search(req.body.user_name, text);
-    play(uri);
+    search(req.body.user_name, text, function(uri) {
+      console.log("called search from slack: " + uri);
+      play(req.body.user_name, uri)
+    });
   }
   let data = {
     response_type: 'in_channel',
