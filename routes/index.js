@@ -91,6 +91,11 @@ var playAll = function(uri) {
   });
 }
 
+var queue = function(uri) {
+  var ref = firebase.database().ref("songs/" + Date.now());
+  ref.set(uri);
+}
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.cookie('user', req.query.user);
@@ -106,7 +111,7 @@ router.post('/request', function(req, res, next) {
   } else {
     search(req.body.user_name, text, function(uri) {
       console.log("called search from slack: " + uri);
-      playAll(uri)
+      queue(uri);
     });
   }
   let data = {
