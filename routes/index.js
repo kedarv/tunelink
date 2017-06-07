@@ -33,14 +33,19 @@ var stateKey = 'spotify_auth_state';
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
+  res.cookie('user', req.query.user);
   res.render('index', { title: 'Express' });
 });
 
 router.post('/request', function(req, res, next) {
   let text = req.body.text;
+  var message;
+  if(text === "auth") {
+    message = "http://localhost:8888?user=" + req.body.user_name;
+  }
   let data = {
     response_type: 'in_channel',
-    text: 'API hit, text: ' + text,
+    text: message
   };
   res.json(data);
 });
@@ -95,7 +100,13 @@ router.get('/callback', function(req, res) {
       if (!error && response.statusCode === 200) {
         var access_token = body.access_token,
             refresh_token = body.refresh_token;
-            console.log(access_token)
+            // console.log(access_token)
+        console.log("USER: ~~~~~~" + req.cookies['user']);
+        firebase.database().ref('users/').set({
+          slack: req.cookies['user'],
+          access_token:  access_token
+        });
+
         var options = {
           url: 'https://api.spotify.com/v1/me',
           headers: { 'Authorization': 'Bearer ' + access_token },
@@ -118,7 +129,7 @@ router.get('/callback', function(req, res) {
           }
         }
         request.get(searchOpts, function(error, response, body) {
-          console.log(body);
+          // console.log(body);
         });
 
         var playOpts = {
