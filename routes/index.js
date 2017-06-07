@@ -75,14 +75,14 @@ var play = function(slack_username, uri) {
   });
 }
 
-var playAll = function() {
+var playAll = function(uri) {
   var ref = firebase.database().ref("users");
 
   ref.on("value", function(snapshot) {
     snapshot.forEach(function(child){
       var child_slack_name = child.val().slack_name;
       console.log(child_slack_name)
-      play(child_slack_name, "spotify:track:7KXjTSCq5nL1LoYtL7XAwS");
+      play(child_slack_name, uri);
     })
   }, function (error) {
     console.log("Error: " + error.code);
