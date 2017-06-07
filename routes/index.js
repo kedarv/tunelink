@@ -31,9 +31,10 @@ var generateRandomString = function(length) {
 
 var stateKey = 'spotify_auth_state';
 
-var search = function(username, q_text, callback) {
-  var access_token = firebase.database().ref("users/" + username + "/access_token");
+var search = function(slack_username, q_text, callback) {
+  var access_token = firebase.database().ref("users/" + slack_username + "/access_token");
   access_token.on("value", function(snapshot) {
+
     var searchOpts = {
       url: 'https://api.spotify.com/v1/search',
       headers: { 'Authorization': 'Bearer ' + snapshot.val() },
@@ -44,29 +45,34 @@ var search = function(username, q_text, callback) {
         limit: "1"
       }
     }
-  
     request.get(searchOpts, function(error, response, body) {
       var parsed = JSON.parse(body);
-      // console.log("got " + parsed.tracks.items[0].uri + " calling callback");
       callback(parsed.tracks.items[0].uri);
     }); 
+
   }, function (error) {
      console.log("Error: " + error.code);
   });
 }
 
-var play = function(uri) {
-  var playOpts = {
-    url: 'https://api.spotify.com/v1/me/player/play',
-    headers: { 'Authorization': 'Bearer ' + access_token.val() },
-    method: 'PUT',
-    json: {
-      context_uri: uri,
-      offset: {position: 5}
+var play = function(slack_username, uri) {
+  var access_token = firebase.database().ref("users/" + slack_username + "/access_token");
+  access_token.on("value", function(snapshot) {
+
+    var playOpts = {
+      url: 'https://api.spotify.com/v1/me/player/play',
+      headers: { 'Authorization': 'Bearer ' + snapshot.val() },
+      method: 'PUT',
+      json: {
+        uris: [uri]
+      }
     }
-  }
-  request(playOpts, function(error, response, body) {
-    console.log("Played song");
+    request(playOpts, function(error, response, body) {
+      console.log("Played song");
+    });
+
+  }, function (error) {
+     console.log("Error: " + error.code);
   });
 }
 
@@ -83,10 +89,10 @@ router.post('/request', function(req, res, next) {
   if(text === "auth") {
     message = "http://localhost:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
   } else {
-    search(req.body.user_name, text, function(spotify_uri) {
-      console.log("in callback: " + spotify_uri);
+    search(req.body.user_name, text, function(uri) {
+      console.log("called search from slack: " + uri);
+      play(req.body.user_name, uri)
     });
-    // play(uri);
   }
   let data = {
     response_type: 'in_channel',
