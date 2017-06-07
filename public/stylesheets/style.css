@@ -21,3 +21,8 @@ p {
 	font-family: 'Raleway', sans-serif;
 	color: #fff;
 }
+
+#now-playing{
+	padding: 10px;
+	text-align: center;
+}
