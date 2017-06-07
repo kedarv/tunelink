@@ -8,6 +8,17 @@ var client_id = '9c907cf58ae1447da90041a93960855a'; // Your client id
 var client_secret = '3b45951661b047e3aa3926df20a085dc'; // Your secret
 var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
 
+var firebase = require('firebase');
+var config = {
+  apiKey: "AIzaSyA0_mdwrZcBaH8lCGhj3jjxgJD8VmoQAiE",
+  authDomain: "tunelink-e22a0.firebaseapp.com",
+  databaseURL: "https://tunelink-e22a0.firebaseio.com",
+  projectId: "tunelink-e22a0",
+  storageBucket: "tunelink-e22a0.appspot.com",
+  messagingSenderId: "31953235674"
+};
+firebase.initializeApp(config);
+
 var generateRandomString = function(length) {
   var text = '';
   var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -93,33 +104,6 @@ router.get('/callback', function(req, res) {
 
         // use the access token to access the Spotify Web API
         request.get(options, function(error, response, body) {
-          console.log(body);
-        });
-
-        var searchOpts = {
-          url: 'https://api.spotify.com/v1/search',
-          headers: { 'Authorization': 'Bearer ' + access_token },
-          qs: {
-            q: "Humble",
-            type: "track",
-            market: "US",
-            limit: "10"
-          }
-        }
-        request.get(searchOpts, function(error, response, body) {
-          console.log(body);
-        });
-
-        var playOpts = {
-          url: 'https://api.spotify.com/v1/me/player/play',
-          headers: { 'Authorization': 'Bearer ' + access_token },
-          method: 'PUT',
-          json: {
-            context_uri: "spotify:album:5ht7ItJgpBH7W6vJ5BqpPr",
-            offset: {position: 5}
-          }
-        }
-        request(playOpts, function(error, response, body) {
           console.log(body);
         });
 
