@@ -45,6 +45,8 @@ var search = function(slack_username, q_text, callback) {
       }
     }
     request.get(searchOpts, function(error, response, body) {
+      console.log(error);
+      console.log(body);
       var parsed = JSON.parse(body);
       callback(parsed.tracks.items[0].uri);
     });
@@ -67,7 +69,7 @@ var play = function(slack_username, uri) {
       }
     }
     request(playOpts, function(error, response, body) {
-      console.log("Played song");
+      console.log("Playing song for " + slack_username);
     });
 
   }, function (error) {
@@ -89,8 +91,6 @@ var playAll = function(uri) {
   });
 }
 
-playAll();
-
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.cookie('user', req.query.user);
@@ -106,7 +106,7 @@ router.post('/request', function(req, res, next) {
   } else {
     search(req.body.user_name, text, function(uri) {
       console.log("called search from slack: " + uri);
-      play(req.body.user_name, uri)
+      playAll(uri)
     });
   }
   let data = {
