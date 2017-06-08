@@ -81,7 +81,8 @@ var play = function(slack_username, uri) {
       request(playOpts, function(error, response, body) {
         console.log("Playing song for " + slack_username);
         request(seekOpts, function(error2, response2, body2) {
-          console.log("Seeking Song");
+          console.log("Seeking Song to time " + (songDuration - getTimeLeft(songTime)));
+          console.log(response2);
         })
       });
     }, function (error) {
