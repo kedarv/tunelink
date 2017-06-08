@@ -58,29 +58,28 @@ var search = function(slack_username, q_text, callback) {
 }
 
 var play = function(slack_username, uri) {
-  var access_token = firebase.database().ref("users/" + slack_username + "/access_token");
-  access_token.on("value", function(snapshot) {
-
-    var playOpts = {
-      url: 'https://api.spotify.com/v1/me/player/play',
-      headers: { 'Authorization': 'Bearer ' + snapshot.val() },
-      method: 'PUT',
-      json: {
-        uris: [uri]
+  refreshToken(slack_username, function() {
+    var access_token = firebase.database().ref("users/" + slack_username + "/access_token");
+    access_token.on("value", function(snapshot) {
+      var playOpts = {
+        url: 'https://api.spotify.com/v1/me/player/play',
+        headers: { 'Authorization': 'Bearer ' + snapshot.val() },
+        method: 'PUT',
+        json: {
+          uris: [uri]
+        }
       }
-    }
-    request(playOpts, function(error, response, body) {
-      console.log("Playing song for " + slack_username);
+      request(playOpts, function(error, response, body) {
+        console.log("Playing song for " + slack_username);
+      });
+    }, function (error) {
+       console.log("Error: " + error.code);
     });
-
-  }, function (error) {
-     console.log("Error: " + error.code);
   });
 }
 
 var playAll = function(uri) {
   var ref = firebase.database().ref("users");
-
   ref.on("value", function(snapshot) {
     snapshot.forEach(function(child){
       var child_slack_name = child.val().slack_name;
@@ -93,7 +92,7 @@ var playAll = function(uri) {
 
 var queue = function(uri) {
   var ref = firebase.database().ref("songs/" + Date.now());
-  ref.set(uri);
+  ref.set({uri: uri, active: 0});
 }
 
 /* GET home page. */
@@ -124,7 +123,6 @@ router.post('/request', function(req, res, next) {
 });
 
 router.get('/login', function(req, res) {
-
   var state = generateRandomString(16);
   res.cookie(stateKey, state);
 
@@ -173,12 +171,12 @@ router.get('/callback', function(req, res) {
       if (!error && response.statusCode === 200) {
         var access_token = body.access_token,
             refresh_token = body.refresh_token;
-            // console.log(access_token)
-        console.log("USER: ~~~~~~" + req.cookies['user']);
+
         firebase.database().ref('users/' + req.cookies['user']).set({
           slack_name: req.cookies['user'],
           slack_id: req.cookies['id'],
-          access_token:  access_token
+          access_token:  access_token,
+          refresh_token: refresh_token
         });
 
         var options = {
@@ -191,35 +189,6 @@ router.get('/callback', function(req, res) {
         request.get(options, function(error, response, body) {
           console.log(body);
         });
-
-        var searchOpts = {
-          url: 'https://api.spotify.com/v1/search',
-          headers: { 'Authorization': 'Bearer ' + access_token },
-          qs: {
-            q: "Humble",
-            type: "track",
-            market: "US",
-            limit: "1"
-          }
-        }
-        request.get(searchOpts, function(error, response, body) {
-          var parsed = JSON.parse(body);
-          console.log(parsed.tracks.items[0].uri)
-        });
-
-        var playOpts = {
-          url: 'https://api.spotify.com/v1/me/player/play',
-          headers: { 'Authorization': 'Bearer ' + access_token },
-          method: 'PUT',
-          json: {
-            context_uri: "spotify:album:5ht7ItJgpBH7W6vJ5BqpPr",
-            offset: {position: 5}
-          }
-        }
-        request(playOpts, function(error, response, body) {
-          console.log(body);
-        });
-
 
         // we can also pass the token to the browser to make requests from there
         res.redirect('/#' +
@@ -236,6 +205,19 @@ router.get('/callback', function(req, res) {
     });
   }
 });
+
+function refreshToken(username, callback) {
+  var users = firebase.database().ref("users").once("value").then(function(snapshot) {
+    snapshot.forEach(function(child) {
+      if(child.val().slack_name === username) {
+        console.log('access: ' + child.val().access_token);
+        console.log('refresh: ' + child.val().refresh_token);
+        callback();
+        return true;
+      }
+    });
+  });
+}
 
 router.get('/refresh_token', function(req, res) {
   // requesting access token from refresh token
@@ -274,6 +256,7 @@ var getTrack = function(callback) {
     }
     request.get(getTrackOpts, function(error, response, body) {
       var parsed = JSON.parse(body);
+      console.log(parsed);
       callback(parsed.item.duration_ms); 
     });
   });
@@ -282,20 +265,13 @@ var getTrack = function(callback) {
 // var songqueue = ["spotify:track:6kl1qtQXQsFiIWRBK24Cfp", "spotify:track:7KXjTSCq5nL1LoYtL7XAwS"]; 
 var run = function() {
 	var queue = firebase.database().ref("songs").orderByChild('timestamp').on('value', function(snapshot) {
-// 		snapshot.forEach(function(child) {
-// 			if (child.val().active == 1) {
-// 				firebase.database().ref('songs/' + key + "/active").set(2);
-// 			}
-// 		});
-		
 		snapshot.forEach(function(child) {
 			uri = child.val().uri;
 			key = child.key;
-			if (child.val().active == 0 && boolcontinue){
+			if (child.val().active == 0 && boolcontinue) {
 				boolcontinue = false;
-				console.log("called playAll(" + uri + ")");
+				console.log("calling playAll(" + uri + ")");
 				playAll(uri);
- 				console.log('key is ' + key + ' , continue: ' + boolcontinue);
 				firebase.database().ref('songs/' + key + "/active").set(1);
 				return true;	
 			};
@@ -303,9 +279,9 @@ var run = function() {
 	});
 	var track = getTrack(function(duration) {
 		console.log("in callback " + duration);
+    console.log(duration);
 		setTimeout(function() {boolcontinue = true; run();}, duration);
  	});
-	
 }
 
 run();
