@@ -94,7 +94,7 @@ var queue = function(parsed) {
   parsed.album.artists.forEach(function(element) {
     artists += element.name + " ";
   });
-  ref.set({uri: parsed.uri, active: 0, img: parsed.album.images[0].url, songname: parsed.name, artists: artists});
+  ref.set({uri: parsed.uri, active: 0, img: parsed.album.images[0].url, songname: parsed.name, artists: artists, duration: parsed.duration_ms});
 }
 
 /* GET home page. */
@@ -296,7 +296,7 @@ router.get('/refresh_token', function(req, res) {
 
 var getTrack = function(callback) {
   var user = firebase.database().ref("users").once("value").then(function(snapshot) {
-    accesstok = snapshot.val()[Object.keys(snapshot.val())[0]].access_token	
+    accesstok = snapshot.val()[Object.keys(snapshot.val())[0]].access_token 
     var getTrackOpts = {
       url: 'https://api.spotify.com/v1/me/player',
       headers: { 'Authorization': 'Bearer ' + accesstok },
@@ -311,27 +311,29 @@ var getTrack = function(callback) {
   
 // var songqueue = ["spotify:track:6kl1qtQXQsFiIWRBK24Cfp", "spotify:track:7KXjTSCq5nL1LoYtL7XAwS"]; 
 var run = function() {
-	var queue = firebase.database().ref("songs").orderByChild('timestamp').on('value', function(snapshot) {
-		snapshot.forEach(function(child) {
-			uri = child.val().uri;
-			key = child.key;
+  var queue = firebase.database().ref("songs").orderByChild('timestamp').on('value', function(snapshot) {
+    snapshot.forEach(function(child) {
+      uri = child.val().uri;
+      key = child.key;
       if(child.val().active == 1 && boolcontinue) {
         firebase.database().ref('songs/' + key + "/active").set(2);
       }
-			if (child.val().active == 0 && boolcontinue) {
-				boolcontinue = false;
-				console.log("calling playAll(" + uri + ")");
-				playAll(uri);
-				firebase.database().ref('songs/' + key + "/active").set(1);
-				return true;	
-			};
-		});
-	});
-	var track = getTrack(function(duration) {
-		console.log("in callback " + duration);
-    console.log(duration);
-		setTimeout(function() {boolcontinue = true; run();}, duration);
- 	});
+      if (child.val().active == 0 && boolcontinue) {
+        boolcontinue = false;
+        console.log("calling playAll(" + uri + ")");
+        playAll(uri);
+        var songduration = child.val().duration;
+        console.log('entering callback ' + songduration);
+        setTimeout(function() {boolcontinue = true; run();}, songduration);
+        firebase.database().ref('songs/' + key + "/active").set(1);
+        return true;  
+      };
+    });
+  });
+  // var track = getTrack(function(duration) {
+  //  console.log("in callback " + duration);
+ //    console.log(duration);
+ //   });
 }
 
 run();
