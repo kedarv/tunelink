@@ -46,10 +46,8 @@ var search = function(slack_username, q_text, callback) {
       }
     }
     request.get(searchOpts, function(error, response, body) {
-      console.log(error);
-      console.log(body);
       var parsed = JSON.parse(body);
-      callback(parsed.tracks.items[0].uri);
+      callback(parsed);
     });
 
   }, function (error) {
@@ -89,9 +87,14 @@ var playAll = function(uri) {
   });
 }
 
-var queue = function(uri) {
+var queue = function(parsed) {
   var ref = firebase.database().ref("songs/" + Date.now());
-  ref.set({uri: uri, active: 0});
+  var artists = "";
+  console.log(parsed);
+  parsed.album.artists.forEach(function(element) {
+    artists += element.name + " ";
+  });
+  ref.set({uri: parsed.uri, active: 0, img: parsed.album.images[0].url, songname: parsed.name, artists: artists});
 }
 
 /* GET home page. */
@@ -134,9 +137,9 @@ router.post('/request', function(req, res, next) {
   if(text === "auth") {
     message = "http://localhost:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
   } else {
-    search(req.body.user_name, text, function(uri) {
-      console.log("called search from slack: " + uri);
-      queue(uri);
+    search(req.body.user_name, text, function(parsed) {
+      console.log("called search from slack: " + parsed.tracks.items[0].uri);
+      queue(parsed.tracks.items[0]);
     });
   }
   let data = {

@@ -8,7 +8,15 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
     <link href="/stylesheets/style.css" rel="stylesheet" />
-
+    <style>
+    .next-img {
+      max-width: 50px;
+    }
+    .white-table {
+      color: #fff !important;
+      font-size: 18px;
+    }
+    </style>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Raleway:900" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
@@ -44,9 +52,7 @@
 
       <div id="up-next" class="card">
         <h4 class="white-text thicker">Up next:</h4><br/>
-        <table>
-          
-        </table>
+        <div id="upnext"></div>
       </div>
 
       <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
@@ -64,6 +70,25 @@
         messagingSenderId: "31953235674"
       };
       firebase.initializeApp(config);
+      var ref = firebase.database().ref("songs");
+      ref.once('value', function(snapshot) {
+        var text = "<table class='white-table'>";
+        snapshot.forEach(function(element) {
+          if(element.val().active == 0) {
+            console.log(element.val());
+            text += "<tr><td><img src='" + element.val().img + "' class='next-img'></td><td>"+element.val().songname + " - " + element.val().artists + "</td></tr>";
+          }
+        });
+        text += "</table>";
+        $("#upnext").html(text);
+      });
+      ref.on('value', function(snapshot) {
+        snapshot.forEach(function(element) {
+          if(element.val().active == 0) {
+            console.log(element.val());
+          }
+        });
+      });
     </script>
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   </body>
