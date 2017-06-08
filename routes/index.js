@@ -58,7 +58,7 @@ var search = function(slack_username, q_text, callback) {
 }
 
 var play = function(slack_username, uri) {
-  refreshToken(slack_username, function() {
+  // refreshToken(slack_username);
     var access_token = firebase.database().ref("users/" + slack_username + "/access_token");
     access_token.on("value", function(snapshot) {
       var playOpts = {
@@ -75,7 +75,6 @@ var play = function(slack_username, uri) {
     }, function (error) {
        console.log("Error: " + error.code);
     });
-  });
 }
 
 var playAll = function(uri) {
@@ -206,16 +205,35 @@ router.get('/callback', function(req, res) {
   }
 });
 
-function refreshToken(username, callback) {
+function refreshToken(username) {
+  var goforward = false;
   var users = firebase.database().ref("users").once("value").then(function(snapshot) {
     snapshot.forEach(function(child) {
       if(child.val().slack_name === username) {
-        console.log('access: ' + child.val().access_token);
-        console.log('refresh: ' + child.val().refresh_token);
-        callback();
-        return true;
+        var authOptions = {
+          url: 'https://accounts.spotify.com/api/token',
+          headers: { 'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64')) },
+          form: {
+            grant_type: 'refresh_token',
+            refresh_token: child.val().refresh_token
+          },
+          json: true
+        };
+  
+        request.post(authOptions, function(error, response, body) {
+          if (!error && response.statusCode === 200) {
+            var access_token = body.access_token;
+            firebase.database().ref('users/' + username).update({
+              access_token:  access_token
+            });
+          }
+          goforward = true;
+        });
       }
     });
+    if(goforward) {
+      return true;
+    }
   });
 }
 
@@ -235,7 +253,7 @@ router.get('/refresh_token', function(req, res) {
   request.post(authOptions, function(error, response, body) {
     if (!error && response.statusCode === 200) {
       var access_token = body.access_token;
-      firebase.database().ref('users/' + req.cookies['user']).set({
+      firebase.database().ref('users/' + req.cookies['user']).update({
         slack_name: req.cookies['user'],
         slack_id: req.cookies['id'],
         access_token:  access_token
