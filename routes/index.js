@@ -144,7 +144,7 @@ router.post('/request', function(req, res, next) {
     var users = firebase.database().ref("users").once("value").then(function(snapshot) {
       snapshot.forEach(function(child) {
         if(child.val().slack_name === current_user && child.val().active === true) {
-          child.update({active: false});
+          firebase.database().ref('users/' + current_user + '/active').set(false);
         }
       })
     });
