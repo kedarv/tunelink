@@ -323,7 +323,7 @@ var run = function() {
 				console.log("calling playAll(" + uri + ")");
 				playAll(uri);
 				firebase.database().ref('songs/' + key + "/active").set(1);
-				return true;	
+				return true;
 			};
 		});
 	});
@@ -334,7 +334,7 @@ var run = function() {
  	});
 }
 
-run();
+// run();
 
 
 module.exports = router;
