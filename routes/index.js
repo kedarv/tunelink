@@ -91,7 +91,7 @@ var play = function(slack_username, uri) {
 
 var playAll = function(uri) {
   var ref = firebase.database().ref("users");
-  ref.once("value", function(snapshot) {
+  ref.on("value", function(snapshot) {
     snapshot.forEach(function(child){
       if(child.val().active === true){
         var child_slack_name = child.val().slack_name;
