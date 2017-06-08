@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
     <link href="/stylesheets/style.css" rel="stylesheet" />
-    
+
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Raleway:900" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
@@ -28,7 +28,9 @@
 
     <div class="container">
       <div id="name" class="row">
-        <h4 class="white-text">{{{name}}}</h4>
+        <div class="col s6 left-align"><h4 class="white-text">{{{name}}}</h4></div>
+        
+        <div class="col s6 right-align"><a class="btn-floating btn-large waves-effect waves-light blue-grey tooltipped" id="obtain-new-token" data-position="bottom" data-delay="50" data-tooltip="Refresh token"><i class="material-icons">refresh</i></a></div>
       </div>
       <div id="now-playing" class="card">
         <h4 class="white-text">Now Playing</h4><br/>
@@ -46,7 +48,6 @@
         <div id="upnext"></div>
       </div>
 
-      <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/4.1.2/firebase.js"></script>
@@ -94,6 +95,17 @@
           }
         });
       });
+
+      document.getElementById('obtain-new-token').addEventListener('click', function() {
+        $.ajax({
+          url: '/refresh_token',
+          data: {
+            'refresh_token': refresh_token
+          }
+        }).done(function(data) {
+          access_token = data.access_token;
+        });
+      }, false);
     </script>
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   </body>
