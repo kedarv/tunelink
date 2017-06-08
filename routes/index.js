@@ -104,6 +104,11 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
+/* GET dashboard. */
+router.get('/dashboard', function(req, res, next) {
+  res.render('dashboard', {});
+});
+
 router.post('/request', function(req, res, next) {
   let text = req.body.text;
   var message;
@@ -221,7 +226,7 @@ router.get('/callback', function(req, res) {
 
 
         // we can also pass the token to the browser to make requests from there
-        res.redirect('/#' +
+        res.redirect('/dashboard' +
           querystring.stringify({
             access_token: access_token,
             refresh_token: refresh_token

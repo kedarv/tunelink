@@ -30,8 +30,8 @@ h1 {
 }
 
 p {
-	font-size: 2.5em;
-	font-family: 'Raleway', sans-serif;
+	font-size: 2em;
+	font-family: 'Open Sans', sans-serif;
 	color: #fff;
 	font-weight: 300;
 }
@@ -40,6 +40,12 @@ p {
 	padding: 10px;
 	text-align: center;
 }
+
+#up-next{
+	padding: 10px;
+	text-align: center;
+}
+
 .spotify-img {
 	max-width: 190px;
 	margin: 0 auto;
@@ -55,14 +61,18 @@ p {
   width: 500px;
 }
 
-p.normal {
-    font-weight: normal;
+.normal {
+    font-weight: 300;
+}
+.thick {
+    font-weight: 700;
 }
 
-p.thick {
-    font-weight: bold;
-}
-
-p.thicker {
+.thicker {
     font-weight: 900;
+}
+
+span {
+	color: #fff;
+	font-size: 2em;
 }
