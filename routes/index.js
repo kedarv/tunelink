@@ -6,7 +6,7 @@ var router = express.Router();
 
 var client_id = '9c907cf58ae1447da90041a93960855a'; // Your client id
 var client_secret = '3b45951661b047e3aa3926df20a085dc'; // Your secret
-var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
+var redirect_uri = 'http://162.243.254.78:8888/callback'; // Your redirect uri
 
 var firebase = require('firebase');
 var config = {
@@ -18,7 +18,7 @@ var config = {
   messagingSenderId: "31953235674"
 };
 firebase.initializeApp(config);
-
+var startup = true;
 var generateRandomString = function(length) {
   var text = '';
   var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -77,10 +77,12 @@ var play = function(slack_username, uri) {
 
 var playAll = function(uri) {
   var ref = firebase.database().ref("users");
-  ref.on("value", function(snapshot) {
+  ref.once("value", function(snapshot) {
     snapshot.forEach(function(child){
-      var child_slack_name = child.val().slack_name;
-      play(child_slack_name, uri);
+      if(child.val().active === true){
+        var child_slack_name = child.val().slack_name;
+        play(child_slack_name, uri);
+      }
     })
   }, function (error) {
     console.log("Error: " + error.code);
@@ -94,7 +96,7 @@ var queue = function(parsed) {
   parsed.album.artists.forEach(function(element) {
     artists += element.name + " ";
   });
-  ref.set({uri: parsed.uri, active: 0, img: parsed.album.images[0].url, songname: parsed.name, artists: artists});
+  ref.set({uri: parsed.uri, active: 0, img: parsed.album.images[0].url, songname: parsed.name, artists: artists, duration: parsed.duration_ms});
 }
 
 /* GET home page. */
@@ -135,8 +137,20 @@ router.post('/request', function(req, res, next) {
   let text = req.body.text;
   var message;
   if(text === "auth") {
-    message = "http://localhost:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
-  } else {
+    message = "http://162.243.254.78:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
+  }
+  else if(text === "leave") {
+    var current_user = req.body.user_name;
+    var users = firebase.database().ref("users").once("value").then(function(snapshot) {
+      snapshot.forEach(function(child) {
+        if(child.val().slack_name === current_user && child.val().active === true) {
+          firebase.database().ref('users/' + current_user + '/active').set(false);
+        }
+      })
+    });
+    message = "You have left the channel.";
+  }
+  else {
     search(req.body.user_name, text, function(parsed) {
       console.log(parsed);
       console.log("called search from slack: " + parsed.tracks.items[0].uri);
@@ -203,6 +217,7 @@ router.get('/callback', function(req, res) {
         firebase.database().ref('users/' + req.cookies['user']).set({
           slack_name: req.cookies['user'],
           slack_id: req.cookies['id'],
+          active: true,
           access_token:  access_token,
           refresh_token: refresh_token
         });
@@ -248,7 +263,7 @@ function refreshToken(username) {
           },
           json: true
         };
-  
+
         request.post(authOptions, function(error, response, body) {
           if (!error && response.statusCode === 200) {
             var access_token = body.access_token;
@@ -285,6 +300,7 @@ router.get('/refresh_token', function(req, res) {
       firebase.database().ref('users/' + req.cookies['user']).update({
         slack_name: req.cookies['user'],
         slack_id: req.cookies['id'],
+        active: true,
         access_token:  access_token
       });
       res.send({
@@ -294,47 +310,51 @@ router.get('/refresh_token', function(req, res) {
   });
 });
 
-var getTrack = function(callback) {
-  var user = firebase.database().ref("users").once("value").then(function(snapshot) {
-    accesstok = snapshot.val()[Object.keys(snapshot.val())[0]].access_token	
-    var getTrackOpts = {
-      url: 'https://api.spotify.com/v1/me/player',
-      headers: { 'Authorization': 'Bearer ' + accesstok },
-    }
-    request.get(getTrackOpts, function(error, response, body) {
-      var parsed = JSON.parse(body);
-      console.log(parsed);
-      callback(parsed.item.duration_ms); 
-    });
-  });
-}
-  
-// var songqueue = ["spotify:track:6kl1qtQXQsFiIWRBK24Cfp", "spotify:track:7KXjTSCq5nL1LoYtL7XAwS"]; 
+// var getTrack = function(callback) {
+//   var user = firebase.database().ref("users").once("value").then(function(snapshot) {
+//     accesstok = snapshot.val()[Object.keys(snapshot.val())[0]].access_token
+//     var getTrackOpts = {
+//       url: 'https://api.spotify.com/v1/me/player',
+//       headers: { 'Authorization': 'Bearer ' + accesstok },
+//     }
+//     request.get(getTrackOpts, function(error, response, body) {
+//       var parsed = JSON.parse(body);
+//       console.log(parsed);
+//       callback(parsed.item.duration_ms);
+//     });
+//   });
+// }
+
+// var songqueue = ["spotify:track:6kl1qtQXQsFiIWRBK24Cfp", "spotify:track:7KXjTSCq5nL1LoYtL7XAwS"];
 var run = function() {
-	var queue = firebase.database().ref("songs").orderByChild('timestamp').on('value', function(snapshot) {
-		snapshot.forEach(function(child) {
-			uri = child.val().uri;
-			key = child.key;
+  var queue = firebase.database().ref("songs").orderByChild('timestamp').on('value', function(snapshot) {
+    snapshot.forEach(function(child) {
+      uri = child.val().uri;
+      key = child.key;
       if(child.val().active == 1 && boolcontinue) {
         firebase.database().ref('songs/' + key + "/active").set(2);
       }
-			if (child.val().active == 0 && boolcontinue) {
-				boolcontinue = false;
-				console.log("calling playAll(" + uri + ")");
-				playAll(uri);
-				firebase.database().ref('songs/' + key + "/active").set(1);
-				return true;
-			};
-		});
-	});
-	var track = getTrack(function(duration) {
-		console.log("in callback " + duration);
-    console.log(duration);
-		setTimeout(function() {boolcontinue = true; run();}, duration);
- 	});
+      if (child.val().active == 0 && boolcontinue) {
+        boolcontinue = false;
+        console.log("calling playAll(" + uri + ")");
+        playAll(uri);
+        var songduration = child.val().duration;
+        console.log('entering callback ' + songduration);
+        setTimeout(function() {boolcontinue = true; run();}, songduration);
+        firebase.database().ref('songs/' + key + "/active").set(1);
+        return true;
+      };
+    });
+  });
+  // var track = getTrack(function(duration) {
+  //  console.log("in callback " + duration);
+ //    console.log(duration);
+ //   });
 }
 
-// run();
-
+if(startup) {
+  run();
+  startup = false;
+}
 
 module.exports = router;
