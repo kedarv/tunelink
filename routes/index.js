@@ -30,6 +30,7 @@ var generateRandomString = function(length) {
 };
 
 var stateKey = 'spotify_auth_state';
+var boolcontinue = true;
 
 var search = function(slack_username, q_text, callback) {
   var access_token = firebase.database().ref("users/" + slack_username + "/access_token");
@@ -261,41 +262,49 @@ router.get('/refresh_token', function(req, res) {
 
 
 var getTrack = function(callback) {
-
-  var access_token = firebase.database().ref("users/" + username + "/access_token");
-  access_token.on("value", function(snapshot) {
-     console.log(snapshot.val());
-  }, function (error) {
-     console.log("Error: " + error.code);
-  });
-  
-  var getTrackOpts = {
-    url: 'https://api.spotify.com/v1/me/player',
-    headers: { 'Authorization': 'Bearer ' + access_token },
-  }
-
-  request.get(getTrackOpts, function(error, response, body) {
-    var parsed = JSON.parse(body);
-	//console.log(body); 
-    callback(parsed.item.duration_ms); 
+  var user = firebase.database().ref("users").once("value").then(function(snapshot) {
+    accesstok = snapshot.val()[Object.keys(snapshot.val())[0]].access_token	
+    var getTrackOpts = {
+      url: 'https://api.spotify.com/v1/me/player',
+      headers: { 'Authorization': 'Bearer ' + accesstok },
+    }
+    request.get(getTrackOpts, function(error, response, body) {
+      var parsed = JSON.parse(body);
+      callback(parsed.item.duration_ms); 
+    });
   });
 }
   
-var songqueue = ["spotify:track:6kl1qtQXQsFiIWRBK24Cfp", "spotify:track:7KXjTSCq5nL1LoYtL7XAwS"]; 
+// var songqueue = ["spotify:track:6kl1qtQXQsFiIWRBK24Cfp", "spotify:track:7KXjTSCq5nL1LoYtL7XAwS"]; 
 var run = function() {
-	if (songqueue.length > 0){
-		var uri = songqueue.shift();
-		// pop from queue  
-		// ..
-		playAll(uri);
-		var track = getTrack(function(duration) {
-			console.log("in callback " + duration);
-			setTimeout(function() {run();}, duration);
+	var queue = firebase.database().ref("songs").orderByChild('timestamp').on('value', function(snapshot) {
+// 		snapshot.forEach(function(child) {
+// 			if (child.val().active == 1) {
+// 				firebase.database().ref('songs/' + key + "/active").set(2);
+// 			}
+// 		});
+		
+		snapshot.forEach(function(child) {
+			uri = child.val().uri;
+			key = child.key;
+			if (child.val().active == 0 && boolcontinue){
+				boolcontinue = false;
+				console.log("called playAll(" + uri + ")");
+				playAll(uri);
+ 				console.log('key is ' + key + ' , continue: ' + boolcontinue);
+				firebase.database().ref('songs/' + key + "/active").set(1);
+				return true;	
+			};
 		});
-	}
+	});
+	var track = getTrack(function(duration) {
+		console.log("in callback " + duration);
+		setTimeout(function() {boolcontinue = true; run();}, duration);
+ 	});
+	
 }
 
-run(); 
+run();
 
 
 module.exports = router;
