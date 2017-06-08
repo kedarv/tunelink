@@ -79,8 +79,10 @@ var playAll = function(uri) {
   var ref = firebase.database().ref("users");
   ref.on("value", function(snapshot) {
     snapshot.forEach(function(child){
-      var child_slack_name = child.val().slack_name;
-      play(child_slack_name, uri);
+      if(child.val().active === true){
+        var child_slack_name = child.val().slack_name;
+        play(child_slack_name, uri);
+      }
     })
   }, function (error) {
     console.log("Error: " + error.code);
@@ -136,7 +138,19 @@ router.post('/request', function(req, res, next) {
   var message;
   if(text === "auth") {
     message = "http://localhost:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
-  } else {
+  }
+  else if(text === "leave") {
+    var current_user = req.body.user_name;
+    var users = firebase.database().ref("users").once("value").then(function(snapshot) {
+      snapshot.forEach(function(child) {
+        if(child.val().slack_name === current_user && child.val().active === true) {
+          child.val().active.set(false);
+        }
+      })
+    });
+    message = "You have left the channel.";
+  }
+  else {
     search(req.body.user_name, text, function(parsed) {
       console.log(parsed);
       console.log("called search from slack: " + parsed.tracks.items[0].uri);
@@ -203,6 +217,7 @@ router.get('/callback', function(req, res) {
         firebase.database().ref('users/' + req.cookies['user']).set({
           slack_name: req.cookies['user'],
           slack_id: req.cookies['id'],
+          active: true,
           access_token:  access_token,
           refresh_token: refresh_token
         });
@@ -248,7 +263,7 @@ function refreshToken(username) {
           },
           json: true
         };
-  
+
         request.post(authOptions, function(error, response, body) {
           if (!error && response.statusCode === 200) {
             var access_token = body.access_token;
@@ -285,6 +300,7 @@ router.get('/refresh_token', function(req, res) {
       firebase.database().ref('users/' + req.cookies['user']).update({
         slack_name: req.cookies['user'],
         slack_id: req.cookies['id'],
+        active: true,
         access_token:  access_token
       });
       res.send({
@@ -294,22 +310,22 @@ router.get('/refresh_token', function(req, res) {
   });
 });
 
-var getTrack = function(callback) {
-  var user = firebase.database().ref("users").once("value").then(function(snapshot) {
-    accesstok = snapshot.val()[Object.keys(snapshot.val())[0]].access_token 
-    var getTrackOpts = {
-      url: 'https://api.spotify.com/v1/me/player',
-      headers: { 'Authorization': 'Bearer ' + accesstok },
-    }
-    request.get(getTrackOpts, function(error, response, body) {
-      var parsed = JSON.parse(body);
-      console.log(parsed);
-      callback(parsed.item.duration_ms); 
-    });
-  });
-}
-  
-// var songqueue = ["spotify:track:6kl1qtQXQsFiIWRBK24Cfp", "spotify:track:7KXjTSCq5nL1LoYtL7XAwS"]; 
+// var getTrack = function(callback) {
+//   var user = firebase.database().ref("users").once("value").then(function(snapshot) {
+//     accesstok = snapshot.val()[Object.keys(snapshot.val())[0]].access_token
+//     var getTrackOpts = {
+//       url: 'https://api.spotify.com/v1/me/player',
+//       headers: { 'Authorization': 'Bearer ' + accesstok },
+//     }
+//     request.get(getTrackOpts, function(error, response, body) {
+//       var parsed = JSON.parse(body);
+//       console.log(parsed);
+//       callback(parsed.item.duration_ms);
+//     });
+//   });
+// }
+
+// var songqueue = ["spotify:track:6kl1qtQXQsFiIWRBK24Cfp", "spotify:track:7KXjTSCq5nL1LoYtL7XAwS"];
 var run = function() {
   var queue = firebase.database().ref("songs").orderByChild('timestamp').on('value', function(snapshot) {
     snapshot.forEach(function(child) {
@@ -326,7 +342,7 @@ var run = function() {
         console.log('entering callback ' + songduration);
         setTimeout(function() {boolcontinue = true; run();}, songduration);
         firebase.database().ref('songs/' + key + "/active").set(1);
-        return true;  
+        return true;
       };
     });
   });
