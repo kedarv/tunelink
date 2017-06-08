@@ -7,8 +7,8 @@ var router = express.Router();
 var client_id = '9c907cf58ae1447da90041a93960855a'; // Your client id
 var client_secret = '3b45951661b047e3aa3926df20a085dc'; // Your secret
 var redirect_uri = 'http://162.243.254.78:8888/callback'; // Your redirect uri
-var songTime;
-var songDuration;
+var songTime = -1;
+var songDuration = -1;
 var firebase = require('firebase');
 var config = {
   apiKey: "AIzaSyA0_mdwrZcBaH8lCGhj3jjxgJD8VmoQAiE",
@@ -80,6 +80,9 @@ var play = function(slack_username, uri) {
       }
       request(playOpts, function(error, response, body) {
         console.log("Playing song for " + slack_username);
+        request(seekOpts, function(error2, response2, body2) {
+          console.log("Seeking Song");
+        })
       });
     }, function (error) {
        console.log("Error: " + error.code);
