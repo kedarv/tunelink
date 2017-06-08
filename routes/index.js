@@ -95,6 +95,7 @@ var playAll = function(uri) {
     snapshot.forEach(function(child){
       if(child.val().active === true){
         var child_slack_name = child.val().slack_name;
+        console.log("calling play on " + child_slack_name);
         play(child_slack_name, uri);
       }
     })
