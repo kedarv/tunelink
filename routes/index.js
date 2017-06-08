@@ -76,7 +76,7 @@ var play = function(slack_username, uri) {
         url: 'https://api.spotify.com/v1/me/player/seek',
         headers: { 'Authorization': 'Bearer ' + snapshot.val() },
         method: 'PUT',
-        position_ms: songDuration - getTimeLeft(songTime);
+        position_ms: songDuration - getTimeLeft(songTime)
       }
       request(playOpts, function(error, response, body) {
         console.log("Playing song for " + slack_username);
