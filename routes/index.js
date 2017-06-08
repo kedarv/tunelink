@@ -7,7 +7,8 @@ var router = express.Router();
 var client_id = '9c907cf58ae1447da90041a93960855a'; // Your client id
 var client_secret = '3b45951661b047e3aa3926df20a085dc'; // Your secret
 var redirect_uri = 'http://162.243.254.78:8888/callback'; // Your redirect uri
-
+var songTime;
+var songDuration;
 var firebase = require('firebase');
 var config = {
   apiKey: "AIzaSyA0_mdwrZcBaH8lCGhj3jjxgJD8VmoQAiE",
@@ -28,6 +29,10 @@ var generateRandomString = function(length) {
   }
   return text;
 };
+
+function getTimeLeft(timeout) {
+    return Math.ceil((timeout._idleStart + timeout._idleTimeout - Date.now()) / 1000);
+}
 
 var stateKey = 'spotify_auth_state';
 var boolcontinue = true;
@@ -65,7 +70,13 @@ var play = function(slack_username, uri) {
         method: 'PUT',
         json: {
           uris: [uri]
-        }
+        },
+      }
+      var seekOpts = {
+        url: 'https://api.spotify.com/v1/me/player/seek',
+        headers: { 'Authorization': 'Bearer ' + snapshot.val() },
+        method: 'PUT',
+        position_ms: songDuration - getTimeLeft(songTime);
       }
       request(playOpts, function(error, response, body) {
         console.log("Playing song for " + slack_username);
@@ -338,9 +349,9 @@ var run = function() {
         boolcontinue = false;
         console.log("calling playAll(" + uri + ")");
         playAll(uri);
-        var songduration = child.val().duration;
-        console.log('entering callback ' + songduration);
-        setTimeout(function() {boolcontinue = true; run();}, songduration);
+        songDuration = child.val().duration;
+        console.log('entering callback ' + songDuration);
+        songTime = setTimeout(function() {boolcontinue = true; run();}, songDuration);
         firebase.database().ref('songs/' + key + "/active").set(1);
         return true;
       };
