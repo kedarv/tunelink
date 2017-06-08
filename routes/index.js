@@ -137,7 +137,7 @@ router.post('/request', function(req, res, next) {
   let text = req.body.text;
   var message;
   if(text === "auth") {
-    message = "http://localhost:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
+    message = "http://162.243.254.78:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
   }
   else if(text === "leave") {
     var current_user = req.body.user_name;
@@ -151,7 +151,6 @@ router.post('/request', function(req, res, next) {
     message = "You have left the channel.";
   }
   else {
-    message = "http://162.243.254.78:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
     search(req.body.user_name, text, function(parsed) {
       console.log(parsed);
       console.log("called search from slack: " + parsed.tracks.items[0].uri);
