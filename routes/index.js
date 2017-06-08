@@ -340,7 +340,7 @@ var run = function() {
         playAll(uri);
         var songduration = child.val().duration;
         console.log('entering callback ' + songduration);
-        setTimeout(function() {boolcontinue = true; run();}, songduration);
+        setTimeout(function() {boolcontinue = true; run();}, 20000);
         firebase.database().ref('songs/' + key + "/active").set(1);
         return true;
       };
