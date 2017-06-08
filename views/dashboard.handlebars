@@ -8,7 +8,15 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
     <link href="/stylesheets/style.css" rel="stylesheet" />
-
+    <style>
+    .next-img {
+      max-width: 50px;
+    }
+    .white-table {
+      color: #fff !important;
+      font-size: 18px;
+    }
+    </style>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Raleway:900" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
@@ -28,15 +36,13 @@
 
     <div class="container">
       <div id="name" class="row">
-        <div class="col s6 left-align"><h4 class="white-text">{{{name}}}</h4></div>
-        
-        <div class="col s6 right-align"><a class="btn-floating btn-large waves-effect waves-light blue-grey tooltipped" id="obtain-new-token" data-position="bottom" data-delay="50" data-tooltip="Refresh token"><i class="material-icons">refresh</i></a></div>
+        <h4 class="white-text">{{{name}}}</h4>
       </div>
       <div id="now-playing" class="card">
         <h4 class="white-text">Now Playing</h4><br/>
         <div class="song-details row">
           <div class="col s6">
-            <img src="{{{img}}}" width="70%" id="songImg"/>
+            <img src="{{{img}}}" width="80%" id="songImg"/>
           </div>
           <div class="col s6">
             <span class="thick" id="songName">{{{song}}}</span><br/><span class="normal" id="artistName">{{{artist}}}</span>
@@ -54,6 +60,7 @@
         <div class="btn"><span>Add</span></div>
       </div>
 
+      <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/4.1.2/firebase.js"></script>
@@ -74,7 +81,7 @@
         snapshot.forEach(function(element) {
           if(element.val().active == 0) {
             console.log(element.val());
-                text += "<div class='row'><div class='col s4 offset-s1'><img src='" + element.val().img + "'width='30%'></div><div class='col s7 valign-wrapper left-align next-song'><span class='thick'>" + element.val().songname + "<br/><span class='normal artists'>" + element.val().artists + "</span></span></div></div>";
+            text += "<tr><td><img src='" + element.val().img + "' class='next-img'></td><td>"+element.val().songname + " - " + element.val().artists + "</td></tr>";
           }
         });
         text += "</table>";
@@ -88,7 +95,7 @@
             snapshot.forEach(function(element) {
               if(element.val().active == 0) {
                 console.log(element.val());
-                text += "<div class='row'><div class='col s4 offset-s1'><img src='" + element.val().img + "' width='30%'></div><div class='col s7 valign-wrapper left-align next-song'><span class='thick'>" + element.val().songname + "<br/><span class='normal artists'>" + element.val().artists + "</span></span></div></div>";
+                text += "<tr><td><img src='" + element.val().img + "' class='next-img'></td><td>"+element.val().songname + " - " + element.val().artists + "</td></tr>";
               }
             });
             text += "</table>";
@@ -101,17 +108,6 @@
           }
         });
       });
-
-      document.getElementById('obtain-new-token').addEventListener('click', function() {
-        $.ajax({
-          url: '/refresh_token',
-          data: {
-            'refresh_token': refresh_token
-          }
-        }).done(function(data) {
-          access_token = data.access_token;
-        });
-      }, false);
     </script>
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   </body>
