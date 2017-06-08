@@ -1,37 +1,86 @@
 <!doctype html>
 <html>
   <head>
-    <title>Example of the Authorization Code flow with Spotify</title>
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <style type="text/css">
-      #login, #loggedin {
-        display: none;
-      }
-      .text-overflow {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        width: 500px;
-      }
-    </style>
+    <title>TuneLink</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <link href="/stylesheets/style.css" rel="stylesheet" />
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Raleway:900" rel="stylesheet">
+
+    <!-- JavaScript -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.1.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.1.1/firebase-database.js"></script>
+
+
   </head>
 
-  <body>
+  <body class="black">
     <div class="container">
       <div id="login">
-        <h1>This is an example of the Authorization Code flow</h1>
-        <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+        <h1 class="white-text center">TuneLink</h1>
+        <div class="row">
+        <div class="card col s4 offset-s4">
+        <div class="card-image spotify-img">
+          <img src="/images/spotify-logo.png">
+        </div>
+        <div class="card-action">
+          <a href="/login" class="waves-effect waves-light">Log in with Spotify</a>
+        </div>
+        </div>
       </div>
-      <div id="loggedin">
-        <div id="user-profile">
+      </div>
+      <div id="loggedin" class="container">
+        <div id="name" class="row">
+          <p>Stephanie Pang</p>
         </div>
-        <div id="oauth">
+        <div id="now-playing" class="card">
+          <p>Now playing on your Spotify:</p><br/>
+          <div class="song-details row">
+            <div class="col s4">
+              <img src="/images/damn.jpg" width="80%"/>
+            </div>
+            <div class="col s8">
+              <p class="thick">Humble<br/><span class="normal">Kendrick Lamar</span></p>
+            </div>
+          </div>
         </div>
+
+        <div id="song-queue" class="card">
+          <p>Up next:</p>
+          <table>
+          </table>
+        </div>
+
         <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
       </div>
     </div>
 
 
+    <script src="https://www.gstatic.com/firebasejs/4.1.2/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+      var config = {
+        apiKey: "AIzaSyA0_mdwrZcBaH8lCGhj3jjxgJD8VmoQAiE",
+        authDomain: "tunelink-e22a0.firebaseapp.com",
+        databaseURL: "https://tunelink-e22a0.firebaseio.com",
+        projectId: "tunelink-e22a0",
+        storageBucket: "tunelink-e22a0.appspot.com",
+        messagingSenderId: "31953235674"
+      };
+      firebase.initializeApp(config);
+    </script>
+    <script>
+
+    </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     <script>
@@ -76,6 +125,18 @@
               $('#login').show();
               $('#loggedin').hide();
           }
+          
+          document.getElementById('obtain-new-token').addEventListener('click', function() {
+            $.ajax({
+              url: '/refresh_token',
+              data: {
+                'refresh_token': refresh_token
+              }
+            }).done(function(data) {
+              access_token = data.access_token;
+            });
+          }, false);
+
         }
       })();
     </script>

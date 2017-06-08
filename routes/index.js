@@ -84,7 +84,6 @@ var playAll = function(uri) {
   ref.on("value", function(snapshot) {
     snapshot.forEach(function(child){
       var child_slack_name = child.val().slack_name;
-      console.log(child_slack_name)
       play(child_slack_name, uri);
     })
   }, function (error) {
@@ -99,8 +98,10 @@ var queue = function(uri) {
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.cookie('user', req.query.user);
-  res.cookie('id', req.query.id);
+  if(req.query.user != null && req.query.id != null) {
+    res.cookie('user', req.query.user);
+    res.cookie('id', req.query.id);
+  }
   res.render('index', { title: 'Express' });
 });
 
@@ -237,7 +238,6 @@ router.get('/callback', function(req, res) {
 });
 
 router.get('/refresh_token', function(req, res) {
-
   // requesting access token from refresh token
   var refresh_token = req.query.refresh_token;
   var authOptions = {
@@ -253,13 +253,17 @@ router.get('/refresh_token', function(req, res) {
   request.post(authOptions, function(error, response, body) {
     if (!error && response.statusCode === 200) {
       var access_token = body.access_token;
+      firebase.database().ref('users/' + req.cookies['user']).set({
+        slack_name: req.cookies['user'],
+        slack_id: req.cookies['id'],
+        access_token:  access_token
+      });
       res.send({
         'access_token': access_token
       });
     }
   });
 });
-
 
 var getTrack = function(callback) {
   var user = firebase.database().ref("users").once("value").then(function(snapshot) {
