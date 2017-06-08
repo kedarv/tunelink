@@ -72,7 +72,25 @@ p {
     font-weight: 900;
 }
 
-span {
+#now-playing span {
 	color: #fff;
 	font-size: 2em;
+}
+
+.next-song {
+	color: #fff;
+	font-size: 1.5em;
+}
+
+#up-next h4{
+	padding-bottom: 2%;
+}
+
+#song-details {
+	position: relative;
+}
+
+.white-table {
+  color: #fff !important;
+  font-size: 18px;
 }
