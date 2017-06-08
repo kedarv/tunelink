@@ -42,10 +42,10 @@
         <h4 class="white-text thicker">Now playing on your Spotify:</h4><br/>
         <div class="song-details row">
           <div class="col s4">
-            <img src="{{{img}}}" width="80%"/>
+            <img src="{{{img}}}" width="80%" id="songImg"/>
           </div>
           <div class="col s8">
-            <span class="thick">{{{song}}}</span><br/><span class="normal">{{{artist}}}</span>
+            <span class="thick" id="songName">{{{song}}}</span><br/><span class="normal" id="artistName">{{{artist}}}</span>
           </div>
         </div>
       </div>
@@ -85,7 +85,20 @@
       ref.on('value', function(snapshot) {
         snapshot.forEach(function(element) {
           if(element.val().active == 0) {
-            console.log(element.val());
+            var text = "<table class='white-table'>";
+            snapshot.forEach(function(element) {
+              if(element.val().active == 0) {
+                console.log(element.val());
+                text += "<tr><td><img src='" + element.val().img + "' class='next-img'></td><td>"+element.val().songname + " - " + element.val().artists + "</td></tr>";
+              }
+            });
+            text += "</table>";
+            $("#upnext").html(text);
+          }
+          if(element.val().active == 1) {
+            $("#songName").html(element.val().songname);
+            $("#artistName").html(element.val().artists);
+            $("#songImg").attr('src', element.val().img);
           }
         });
       });

@@ -138,6 +138,7 @@ router.post('/request', function(req, res, next) {
     message = "http://localhost:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
   } else {
     search(req.body.user_name, text, function(parsed) {
+      console.log(parsed);
       console.log("called search from slack: " + parsed.tracks.items[0].uri);
       queue(parsed.tracks.items[0]);
     });
@@ -314,6 +315,9 @@ var run = function() {
 		snapshot.forEach(function(child) {
 			uri = child.val().uri;
 			key = child.key;
+      if(child.val().active == 1 && boolcontinue) {
+        firebase.database().ref('songs/' + key + "/active").set(2);
+      }
 			if (child.val().active == 0 && boolcontinue) {
 				boolcontinue = false;
 				console.log("calling playAll(" + uri + ")");
