@@ -105,7 +105,27 @@ router.get('/', function(req, res, next) {
 
 /* GET dashboard. */
 router.get('/dashboard', function(req, res, next) {
-  res.render('dashboard', {});
+  access_tok = req.query.access_token;
+  var userOptions = {
+    url: 'https://api.spotify.com/v1/me',
+    headers: { 'Authorization': 'Bearer ' + access_tok },
+    json: true
+  };
+  var songOptions = {
+    url: 'https://api.spotify.com/v1/me/player',
+    headers: { 'Authorization': 'Bearer ' + access_tok },
+    json: true
+  };
+  // use the access token to access the Spotify Web API
+  request.get(userOptions, function(error, response, body) {
+    request.get(songOptions, function(error2, response2, body2) {
+      var artists = "";
+      body2.item.album.artists.forEach(function(element) {
+        artists += element.name + " ";
+      });
+      res.render('dashboard', {name: body.display_name, artist: artists, img: body2.item.album.images[0].url, song: body2.item.name});
+    });
+  });
 });
 
 router.post('/request', function(req, res, next) {
@@ -195,7 +215,7 @@ router.get('/callback', function(req, res) {
         });
 
         // we can also pass the token to the browser to make requests from there
-        res.redirect('/dashboard' +
+        res.redirect('/dashboard?' +
           querystring.stringify({
             access_token: access_token,
             refresh_token: refresh_token
