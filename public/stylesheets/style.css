@@ -1,6 +1,5 @@
 body {
   padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
   background: url('../images/bg.jpg');
   background-size: cover;
 }
@@ -34,6 +33,7 @@ p {
 	font-size: 2.5em;
 	font-family: 'Raleway', sans-serif;
 	color: #fff;
+	font-weight: 300;
 }
 
 #now-playing{
@@ -43,4 +43,26 @@ p {
 .spotify-img {
 	max-width: 190px;
 	margin: 0 auto;
+}
+
+#login, #loggedin {
+  display: none;
+}
+.text-overflow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 500px;
+}
+
+p.normal {
+    font-weight: normal;
+}
+
+p.thick {
+    font-weight: bold;
+}
+
+p.thicker {
+    font-weight: 900;
 }
