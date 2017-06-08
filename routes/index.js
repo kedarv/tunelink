@@ -246,7 +246,7 @@ router.get('/callback', function(req, res) {
 
         // use the access token to access the Spotify Web API
         request.get(options, function(error, response, body) {
-            var queue = firebase.database().ref("songs").orderByChild('timestamp').on('value', function(snapshot) {
+          var queue = firebase.database().ref("songs").orderByChild('timestamp').on('value', function(snapshot) {
             snapshot.forEach(function(child) {
               uri = child.val().uri;
               key = child.key;
@@ -255,7 +255,7 @@ router.get('/callback', function(req, res) {
                 return true;
               };
             });
-            ;
+          });
         });
 
         // we can also pass the token to the browser to make requests from there
