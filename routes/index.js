@@ -18,7 +18,7 @@ var config = {
   messagingSenderId: "31953235674"
 };
 firebase.initializeApp(config);
-
+var startup = true;
 var generateRandomString = function(length) {
   var text = '';
   var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -352,7 +352,9 @@ var run = function() {
  //   });
 }
 
-run();
-
+if(startup) {
+  run();
+  startup = false;
+}
 
 module.exports = router;
