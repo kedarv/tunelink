@@ -92,7 +92,7 @@ var play = function(slack_username, uri) {
 
 var playAll = function(uri) {
   var ref = firebase.database().ref("users");
-  ref.on("value", function(snapshot) {
+  ref.once("value", function(snapshot) {
     snapshot.forEach(function(child){
       if(child.val().active === true){
         var child_slack_name = child.val().slack_name;
@@ -246,7 +246,16 @@ router.get('/callback', function(req, res) {
 
         // use the access token to access the Spotify Web API
         request.get(options, function(error, response, body) {
-          console.log(body);
+            var queue = firebase.database().ref("songs").orderByChild('timestamp').on('value', function(snapshot) {
+            snapshot.forEach(function(child) {
+              uri = child.val().uri;
+              key = child.key;
+              if (child.val().active == 0) {
+                play(req.cookies['user'], uri);
+                return true;
+              };
+            });
+            ;
         });
 
         // we can also pass the token to the browser to make requests from there
