@@ -6,7 +6,7 @@ var router = express.Router();
 
 var client_id = '9c907cf58ae1447da90041a93960855a'; // Your client id
 var client_secret = '3b45951661b047e3aa3926df20a085dc'; // Your secret
-var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
+var redirect_uri = 'http://162.243.254.78:8888/callback'; // Your redirect uri
 
 var firebase = require('firebase');
 var config = {
@@ -151,6 +151,7 @@ router.post('/request', function(req, res, next) {
     message = "You have left the channel.";
   }
   else {
+    message = "http://162.243.254.78:8888?user=" + req.body.user_name + '&id=' + req.body.user_id;
     search(req.body.user_name, text, function(parsed) {
       console.log(parsed);
       console.log("called search from slack: " + parsed.tracks.items[0].uri);
